@@ -48,7 +48,15 @@ func (g *gener8) generate() {
     outData = rxKw3.ReplaceAllString(outData, g.kw3)
   }
 
-  fmt.Printf(outData + "\n")
+  pwd, err := os.Getwd()
+
+  check(err)
+
+  path := filepath.Join(pwd, g.out)
+
+  err = ioutil.WriteFile(path, []byte(outData), 0644) // r.w r.. r..
+
+  check(err)
 }
 
 func (g *gener8) init() {
