@@ -7,16 +7,15 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"time"
+  "strings"
 )
 
 type gener8 struct {
 	in     string
 	out    string
 	pkg    string
-	kw1    string
-	kw2    string
-	kw3    string
-	kw4    string
+	kws    string
 	inData []byte
 }
 
@@ -31,35 +30,22 @@ func (g *gener8) generate() {
 		outData = rxPkg.ReplaceAllString(outData, g.pkg)
 	}
 
-	if g.kw1 != "" {
-		rxKw1 := regexp.MustCompile(`\$kw1`)
+  if g.kws != "" {
+    keywords := strings.Split(g.kws, ",")
 
-		outData = rxKw1.ReplaceAllString(outData, g.kw1)
-	}
-
-	if g.kw2 != "" {
-		rxKw2 := regexp.MustCompile(`\$kw2`)
-
-		outData = rxKw2.ReplaceAllString(outData, g.kw2)
-	}
-
-	if g.kw3 != "" {
-		rxKw3 := regexp.MustCompile(`\$kw3`)
-
-		outData = rxKw3.ReplaceAllString(outData, g.kw3)
-	}
-
-	if g.kw4 != "" {
-		rxKw4 := regexp.MustCompile(`\$kw4`)
-
-		outData = rxKw4.ReplaceAllString(outData, g.kw4)
-	}
+    for i, kw := range keywords {
+		  rxKw := regexp.MustCompile(fmt.Sprintf("\\$kw%d", i + 1))
+		  outData = rxKw.ReplaceAllString(outData, kw)
+    }
+  }
 
 	pwd, err := os.Getwd()
 
 	check(err)
 
 	path := filepath.Join(pwd, g.out)
+
+	outData = fmt.Sprintf("// %s Auto generated from %s by gener8\n\n", time.Now(), g.in) + outData
 
 	err = ioutil.WriteFile(path, []byte(outData), 0644) // r.w r.. r..
 
@@ -70,10 +56,7 @@ func (g *gener8) init() {
 	flag.StringVar(&g.in, "in", "", "file to parse")
 	flag.StringVar(&g.out, "out", "", "file to write the generated code to")
 	flag.StringVar(&g.pkg, "pkg", "", "the value to replace $pkg with")
-	flag.StringVar(&g.kw1, "kw1", "", "the value to replace $kw1 with")
-	flag.StringVar(&g.kw2, "kw2", "", "the value to replace $kw2 with")
-	flag.StringVar(&g.kw3, "kw3", "", "the value to replace $kw3 with")
-	flag.StringVar(&g.kw4, "kw4", "", "the value to replace $kw4 with")
+	flag.StringVar(&g.kws, "kws", "", "csv list of values to replace $kwn tokens with")
 
 	flag.Parse()
 
