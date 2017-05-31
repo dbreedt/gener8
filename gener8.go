@@ -33,12 +33,12 @@ func (g *gener8) generate() {
 
 	if g.kws != "" {
 
-		keywords, err := csv.NewReader(strings.NewReader(g.kws)).Read()
+		keywords, err := parseKws(g.kws)
 		if err != nil {
 			panic(err)
 		}
 
-		for i, kw := range keywords {
+		for i, kw := range *keywords {
 			rxKw := regexp.MustCompile(fmt.Sprintf("\\$kw%d", i+1))
 			outData = rxKw.ReplaceAllString(outData, kw)
 		}
@@ -55,6 +55,14 @@ func (g *gener8) generate() {
 	err = ioutil.WriteFile(path, []byte(outData), 0644) // r.w r.. r..
 
 	check(err)
+}
+
+func parseKws(kws string) (*[]string, error) {
+	keywords, err := csv.NewReader(strings.NewReader(kws)).Read()
+	if err != nil {
+		return nil, err
+	}
+	return &keywords, nil
 }
 
 func (g *gener8) init() {
