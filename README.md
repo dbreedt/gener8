@@ -6,6 +6,15 @@ simple golang go:generate code generator
 go get github.com/dbreedt/gener8
 ```
 
+# supported parameters
+```
+skip_format: skip gofmt being run on the generated file
+in         : file to parse
+out        : file to write the generated code to
+pkg        : the value to replace $pkg with
+kws        : csv list of values to replace $kwn tokens with
+```
+
 # usage
 Create a file with markers
  * $pkg

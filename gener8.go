@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -13,11 +14,12 @@ import (
 )
 
 type gener8 struct {
-	in     string
-	out    string
-	pkg    string
-	kws    string
-	inData []byte
+	skipFormat bool
+	in         string
+	out        string
+	pkg        string
+	kws        string
+	inData     []byte
 }
 
 func (g *gener8) generate() {
@@ -55,6 +57,12 @@ func (g *gener8) generate() {
 	err = ioutil.WriteFile(path, []byte(outData), 0644) // r.w r.. r..
 
 	check(err)
+
+	if !g.skipFormat {
+		cmd := exec.Command("gofmt", "-w", path)
+		err = cmd.Run()
+		check(err)
+	}
 }
 
 func parseKws(kws string) (*[]string, error) {
@@ -66,6 +74,7 @@ func parseKws(kws string) (*[]string, error) {
 }
 
 func (g *gener8) init() {
+	flag.BoolVar(&g.skipFormat, "skip_format", false, "skip gofmt being run on the generated file")
 	flag.StringVar(&g.in, "in", "", "file to parse")
 	flag.StringVar(&g.out, "out", "", "file to write the generated code to")
 	flag.StringVar(&g.pkg, "pkg", "", "the value to replace $pkg with")
