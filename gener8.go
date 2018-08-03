@@ -32,13 +32,14 @@ func (g *gener8) generate() {
 	}
 
 	if g.kws != "" {
-
 		keywords, err := parseKws(g.kws)
+
 		if err != nil {
 			panic(err)
 		}
 
-		for i, kw := range *keywords {
+		for i := len(*keywords) - 1; i > -1; i-- {
+			kw := (*keywords)[i]
 			rxKw := regexp.MustCompile(fmt.Sprintf("\\$kw%d", i+1))
 			outData = rxKw.ReplaceAllString(outData, kw)
 		}
