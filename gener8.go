@@ -23,8 +23,6 @@ type gener8 struct {
 }
 
 func (g *gener8) generate() {
-	g.init()
-
 	outData := string(g.inData)
 
 	if g.pkg != "" {
@@ -67,13 +65,15 @@ func (g *gener8) generate() {
 
 func parseKws(kws string) (*[]string, error) {
 	keywords, err := csv.NewReader(strings.NewReader(kws)).Read()
+
 	if err != nil {
 		return nil, err
 	}
+
 	return &keywords, nil
 }
 
-func (g *gener8) init() {
+func (g *gener8) setup() {
 	flag.BoolVar(&g.skipFormat, "skip_format", false, "skip gofmt being run on the generated file")
 	flag.StringVar(&g.in, "in", "", "file to parse")
 	flag.StringVar(&g.out, "out", "", "file to write the generated code to")
@@ -107,5 +107,6 @@ func check(err error) {
 
 func main() {
 	g := &gener8{}
+	g.setup()
 	g.generate()
 }
