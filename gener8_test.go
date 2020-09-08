@@ -19,8 +19,8 @@ func TestParsing(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(*keywords) != 3 {
-		t.Error("Found ", len(*keywords), " should be 3")
+	if len(keywords) != 3 {
+		t.Error("Found ", len(keywords), " should be 3")
 	}
 
 	kws = "a,b,\"d,e\""
@@ -31,8 +31,8 @@ func TestParsing(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(*keywords) != 3 {
-		t.Error("Found ", len(*keywords), " should be 3")
+	if len(keywords) != 3 {
+		t.Error("Found ", len(keywords), " should be 3")
 	}
 
 	kws = "AAA,AaA,aaaAAAaaa,"
@@ -43,8 +43,8 @@ func TestParsing(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(*keywords) != 4 {
-		t.Error("Found ", len(*keywords), " should be 3")
+	if len(keywords) != 4 {
+		t.Error("Found ", len(keywords), " should be 3")
 	}
 }
 
@@ -58,9 +58,7 @@ func TestGenerate(t *testing.T) {
 	out := fmt.Sprintf("test_%d.gr8.tmp", time.Now().Unix())
 	testFileOutput := filepath.Join(pwd, out)
 
-	defer func() {
-		os.Remove(testFileOutput)
-	}()
+	defer os.Remove(testFileOutput)
 
 	g := &gener8{
 		skipFormat: true,

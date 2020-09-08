@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 )
 
@@ -30,37 +29,23 @@ const (
 )
 
 func (g *gener8) generate() {
-	outData := string(g.inData)
+	subs := []string{}
 
 	if g.pkg != "" {
-		g.traceOut("generate:Parsing pkg...")
-
-		rxPkg := regexp.MustCompile(`\$pkg`)
-
-		outData = rxPkg.ReplaceAllString(outData, g.pkg)
-
-		g.traceOut("generate:Parsing pkg complete")
+		subs = append(subs, "$pkg", g.pkg)
 	}
 
 	if g.kws != "" {
-		g.traceOut("generate:Parsing kws...")
-
 		keywords, err := parseKws(g.kws)
-
 		check(err)
 
-		g.traceOut("generate:Parsing pkg complete")
+		for i := len(keywords) - 1; i > -1; i-- {
+			key := fmt.Sprintf("$kw%d", i+1)
+			subs = append(subs, key, keywords[i])
 
-		for i := len(*keywords) - 1; i > -1; i-- {
-			g.traceOut("generate:processing $kw%d", i+1)
-
-			kw := (*keywords)[i]
-			rxKw := regexp.MustCompile(fmt.Sprintf("\\$kw%d", i+1))
-			outData = rxKw.ReplaceAllString(outData, kw)
-
-			g.traceOut("generate:processing $kw%d complete", i+1)
 		}
 	}
+	replacer := strings.NewReplacer(subs...)
 
 	g.traceOut("generate:Getwd")
 
@@ -72,8 +57,6 @@ func (g *gener8) generate() {
 
 	path := filepath.Join(pwd, g.out)
 
-	outData = fmt.Sprintf("// Auto generated from %s by gener8\n\n", g.in) + outData
-
 	tmpFile, err := ioutil.TempFile("", "gener8")
 
 	check(err)
@@ -82,9 +65,9 @@ func (g *gener8) generate() {
 
 	g.traceOut("generate:WriteTempFile: path: %s", tmpFile.Name())
 
-	rawOutData := []byte(outData)
-
-	_, err = tmpFile.Write(rawOutData)
+	fmt.Fprintf(tmpFile, "// Auto generated from %s by gener8\n\n", g.in)
+	replacer.WriteString(tmpFile, string(g.inData))
+	tmpFile.Close()
 
 	check(err)
 
@@ -106,9 +89,10 @@ func (g *gener8) generate() {
 
 	if !compareFiles(tmpFile.Name(), path) {
 		g.traceOut("generate:WriteFile: path: %s", path)
+		rawOutData, err := ioutil.ReadFile(tmpFile.Name())
+		check(err)
 
 		err = ioutil.WriteFile(path, rawOutData, 0644) // r.w r.. r..
-
 		check(err)
 
 		g.traceOut("generate:WriteFile Complete")
@@ -133,14 +117,14 @@ func (g *gener8) generate() {
 	}
 }
 
-func parseKws(kws string) (*[]string, error) {
+func parseKws(kws string) ([]string, error) {
 	keywords, err := csv.NewReader(strings.NewReader(kws)).Read()
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &keywords, nil
+	return keywords, nil
 }
 
 func (g *gener8) setup() {
