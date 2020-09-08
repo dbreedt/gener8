@@ -25,7 +25,6 @@ type gener8 struct {
 
 const (
 	chunkSize = 64000
-	notExists = "no such file or directory"
 )
 
 func (g *gener8) generate() {
@@ -160,7 +159,7 @@ func (g *gener8) traceOut(format string, a ...interface{}) {
 func compareFiles(file1, file2 string) bool {
 	f1, err := os.Open(file1)
 
-	if err != nil && strings.Contains(err.Error(), notExists) {
+	if err != nil && os.IsNotExist(err) {
 		return false
 	}
 
@@ -168,7 +167,7 @@ func compareFiles(file1, file2 string) bool {
 
 	f2, err := os.Open(file2)
 
-	if err != nil && strings.Contains(err.Error(), notExists) {
+	if err != nil && os.IsNotExist(err) {
 		return false
 	}
 
