@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 )
 
@@ -46,16 +45,6 @@ func (g *gener8) generate() {
 	}
 	replacer := strings.NewReplacer(subs...)
 
-	g.traceOut("generate:Getwd")
-
-	pwd, err := os.Getwd()
-
-	check(err)
-
-	g.traceOut("generate:Construct out path")
-
-	path := filepath.Join(pwd, g.out)
-
 	tmpFile, err := ioutil.TempFile("", "gener8")
 
 	check(err)
@@ -89,12 +78,12 @@ func (g *gener8) generate() {
 		g.traceOut("generate:SkipFormat - tmpFile")
 	}
 
-	if !compareFiles(tmpFile.Name(), path) {
-		g.traceOut("generate:WriteFile: path: %s", path)
+	if !compareFiles(tmpFile.Name(), g.out) {
+		g.traceOut("generate:WriteFile: path: %s", g.out)
 		rawOutData, err := ioutil.ReadFile(tmpFile.Name())
 		check(err)
 
-		err = ioutil.WriteFile(path, rawOutData, 0644) // r.w r.. r..
+		err = ioutil.WriteFile(g.out, rawOutData, 0644) // r.w r.. r..
 		check(err)
 
 		g.traceOut("generate:WriteFile Complete")
@@ -130,15 +119,10 @@ func (g *gener8) setup() {
 
 	g.traceOut("setup:Complete flag.Parse")
 
-	pwd, err := os.Getwd()
+	g.traceOut("setup:ReadFile: %s", g.in)
 
-	check(err)
-
-	path := filepath.Join(pwd, g.in)
-
-	g.traceOut("setup:ReadFile: %s", path)
-
-	g.inData, err = ioutil.ReadFile(path)
+	var err error
+	g.inData, err = ioutil.ReadFile(g.in)
 
 	check(err)
 }
