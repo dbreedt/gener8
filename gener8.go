@@ -65,10 +65,13 @@ func (g *gener8) generate() {
 
 	g.traceOut("generate:WriteTempFile: path: %s", tmpFile.Name())
 
-	fmt.Fprintf(tmpFile, "// Auto generated from %s by gener8\n\n", g.in)
-	replacer.WriteString(tmpFile, string(g.inData))
-	tmpFile.Close()
+	_, err = fmt.Fprintf(tmpFile, "// Auto generated from %s by gener8\n\n", g.in)
+	check(err)
 
+	_, err = replacer.WriteString(tmpFile, string(g.inData))
+	check(err)
+
+	err = tmpFile.Close()
 	check(err)
 
 	if !g.skipFormat {
@@ -98,22 +101,6 @@ func (g *gener8) generate() {
 		g.traceOut("generate:WriteFile Complete")
 	} else {
 		g.traceOut("generate:WriteFile Skipped...")
-	}
-
-	if !g.skipFormat {
-		g.traceOut("generate:Formatting output file")
-
-		cmd := exec.Command("gofmt", "-w", path)
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
-
-		if err != nil {
-			check(fmt.Errorf("gofmt -w %s failed: %s", g.out, err))
-		}
-
-		g.traceOut("generate:Formatting complete")
-	} else {
-		g.traceOut("generate:SkipFormat")
 	}
 }
 
