@@ -30,7 +30,9 @@ func (g *gener8) generate() {
 	subs := []string{}
 
 	if g.pkg != "" {
+		g.traceOut("generate:Parsing pkg...")
 		subs = append(subs, "$pkg", g.pkg)
+		g.traceOut("generate:Parsing pkg complete")
 	}
 
 	if g.kws != "" {
