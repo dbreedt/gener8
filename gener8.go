@@ -34,8 +34,12 @@ func (g *gener8) generate() {
 	}
 
 	if g.kws != "" {
+		g.traceOut("generate:Parsing kws...")
+
 		keywords, err := parseKws(g.kws)
 		check(err)
+
+		g.traceOut("generate:Parsing pkg complete")
 
 		for i := len(keywords) - 1; i > -1; i-- {
 			key := fmt.Sprintf("$kw%d", i+1)
