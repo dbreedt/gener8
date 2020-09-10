@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/csv"
 	"flag"
@@ -57,12 +58,17 @@ func (g *gener8) generate() {
 
 	defer os.Remove(tmpFile.Name())
 
+	w := bufio.NewWriter(tmpFile)
+
 	g.traceOut("generate:WriteTempFile: path: %s", tmpFile.Name())
 
-	_, err = fmt.Fprintf(tmpFile, "// Auto generated from %s by gener8\n\n", g.in)
+	_, err = fmt.Fprintf(w, "// Auto generated from %s by gener8\n\n", g.in)
 	check(err)
 
-	_, err = replacer.WriteString(tmpFile, string(g.inData))
+	_, err = replacer.WriteString(w, string(g.inData))
+	check(err)
+
+	err = w.Flush()
 	check(err)
 
 	err = tmpFile.Close()
