@@ -20,7 +20,7 @@ kws        : csv list of values to replace $kwn tokens with
 The best way to understand how to use it, is to look at the example in example folder.
 The example demonstrates a simple redis functionality that can be generated and auto extended into a service.
 
-This uses a non go file `redis.alog`
+This uses a non go file `redis.algo`
 ```go
 /*
 kw1: The name of the struct you want to extend
@@ -68,11 +68,12 @@ When you run `go generate ./...` it will generate a file called `auto_generated_
 ```
 
 The main gain from using this is that if we have several services like the printerService that we would like to have a common set of functionality/algorithms that work on different types, templates/generics would sure be handy here, we can write one algo file that contains the algorithm and use `go generate` like the c pre-compiler to generate all the "template" code for us. That way we have compile time type checking and no runtime surprises.
+
+And it removes a lot of copy+pasta errors:
 ```go
 func (s *printerService) GetPrinter(ctx context.Context, id int64) *Printer {
 	item := s.redisGetPrinter(ctx, id)
 	if item != nil {
 		return item
 	}
-  ...
 ```
