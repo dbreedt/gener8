@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/csv"
 	"flag"
@@ -9,8 +10,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
-	"regexp"
 	"strings"
 )
 
@@ -26,19 +25,14 @@ type gener8 struct {
 
 const (
 	chunkSize = 64000
-	notExists = "no such file or directory"
 )
 
 func (g *gener8) generate() {
-	outData := string(g.inData)
+	subs := []string{}
 
 	if g.pkg != "" {
 		g.traceOut("generate:Parsing pkg...")
-
-		rxPkg := regexp.MustCompile(`\$pkg`)
-
-		outData = rxPkg.ReplaceAllString(outData, g.pkg)
-
+		subs = append(subs, "$pkg", g.pkg)
 		g.traceOut("generate:Parsing pkg complete")
 	}
 
@@ -46,33 +40,17 @@ func (g *gener8) generate() {
 		g.traceOut("generate:Parsing kws...")
 
 		keywords, err := parseKws(g.kws)
-
 		check(err)
 
 		g.traceOut("generate:Parsing pkg complete")
 
-		for i := len(*keywords) - 1; i > -1; i-- {
-			g.traceOut("generate:processing $kw%d", i+1)
+		for i := len(keywords) - 1; i > -1; i-- {
+			key := fmt.Sprintf("$kw%d", i+1)
+			subs = append(subs, key, keywords[i])
 
-			kw := (*keywords)[i]
-			rxKw := regexp.MustCompile(fmt.Sprintf("\\$kw%d", i+1))
-			outData = rxKw.ReplaceAllString(outData, kw)
-
-			g.traceOut("generate:processing $kw%d complete", i+1)
 		}
 	}
-
-	g.traceOut("generate:Getwd")
-
-	pwd, err := os.Getwd()
-
-	check(err)
-
-	g.traceOut("generate:Construct out path")
-
-	path := filepath.Join(pwd, g.out)
-
-	outData = fmt.Sprintf("// Auto generated from %s by gener8\n\n", g.in) + outData
+	replacer := strings.NewReplacer(subs...)
 
 	tmpFile, err := ioutil.TempFile("", "gener8")
 
@@ -80,12 +58,20 @@ func (g *gener8) generate() {
 
 	defer os.Remove(tmpFile.Name())
 
+	w := bufio.NewWriter(tmpFile)
+
 	g.traceOut("generate:WriteTempFile: path: %s", tmpFile.Name())
 
-	rawOutData := []byte(outData)
+	_, err = fmt.Fprintf(w, "// Auto generated from %s by gener8\n\n", g.in)
+	check(err)
 
-	_, err = tmpFile.Write(rawOutData)
+	_, err = replacer.WriteString(w, string(g.inData))
+	check(err)
 
+	err = w.Flush()
+	check(err)
+
+	err = tmpFile.Close()
 	check(err)
 
 	if !g.skipFormat {
@@ -104,43 +90,28 @@ func (g *gener8) generate() {
 		g.traceOut("generate:SkipFormat - tmpFile")
 	}
 
-	if !compareFiles(tmpFile.Name(), path) {
-		g.traceOut("generate:WriteFile: path: %s", path)
+	if !compareFiles(tmpFile.Name(), g.out) {
+		g.traceOut("generate:WriteFile: path: %s", g.out)
+		rawOutData, err := ioutil.ReadFile(tmpFile.Name())
+		check(err)
 
-		err = ioutil.WriteFile(path, rawOutData, 0644) // r.w r.. r..
-
+		err = ioutil.WriteFile(g.out, rawOutData, 0644) // r.w r.. r..
 		check(err)
 
 		g.traceOut("generate:WriteFile Complete")
 	} else {
 		g.traceOut("generate:WriteFile Skipped...")
 	}
-
-	if !g.skipFormat {
-		g.traceOut("generate:Formatting output file")
-
-		cmd := exec.Command("gofmt", "-w", path)
-		cmd.Stderr = os.Stderr
-		err = cmd.Run()
-
-		if err != nil {
-			check(fmt.Errorf("gofmt -w %s failed: %s", g.out, err))
-		}
-
-		g.traceOut("generate:Formatting complete")
-	} else {
-		g.traceOut("generate:SkipFormat")
-	}
 }
 
-func parseKws(kws string) (*[]string, error) {
+func parseKws(kws string) ([]string, error) {
 	keywords, err := csv.NewReader(strings.NewReader(kws)).Read()
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &keywords, nil
+	return keywords, nil
 }
 
 func (g *gener8) setup() {
@@ -160,15 +131,10 @@ func (g *gener8) setup() {
 
 	g.traceOut("setup:Complete flag.Parse")
 
-	pwd, err := os.Getwd()
+	g.traceOut("setup:ReadFile: %s", g.in)
 
-	check(err)
-
-	path := filepath.Join(pwd, g.in)
-
-	g.traceOut("setup:ReadFile: %s", path)
-
-	g.inData, err = ioutil.ReadFile(path)
+	var err error
+	g.inData, err = ioutil.ReadFile(g.in)
 
 	check(err)
 }
@@ -189,7 +155,7 @@ func (g *gener8) traceOut(format string, a ...interface{}) {
 func compareFiles(file1, file2 string) bool {
 	f1, err := os.Open(file1)
 
-	if err != nil && strings.Contains(err.Error(), notExists) {
+	if err != nil && os.IsNotExist(err) {
 		return false
 	}
 
@@ -197,7 +163,7 @@ func compareFiles(file1, file2 string) bool {
 
 	f2, err := os.Open(file2)
 
-	if err != nil && strings.Contains(err.Error(), notExists) {
+	if err != nil && os.IsNotExist(err) {
 		return false
 	}
 
