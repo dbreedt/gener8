@@ -1,0 +1,38 @@
+/*
+kw1: The name of the struct you want to extend
+kw2: The sub-system name
+kw3: The data type name
+*/
+
+package $pkg
+
+import (
+  "context"
+  "encoding/json"
+	"fmt"
+  "log"
+
+  "github.com/go-redis/redis/v8"
+)
+
+func (s *$kw1) redis$kw3Key(key int64) string {
+	return fmt.Sprintf("$kw2_$kw3_%d", key)
+}
+
+func (s *$kw1) redisGet$kw3(ctx context.Context, key int64) *$kw3 {
+  rKey := s.redis$kw3Key(key)
+	data, err := s.redis.Get(ctx, rKey).Result()
+	if err != nil {
+    if err != redis.Nil {
+      log.Println("Redis call failed for key", rKey)
+    }
+		return nil
+	}
+
+  item := &$kw3{}
+  err = json.Unmarshal([]byte(data), item)
+	if err != nil {
+    log.Println("Redis::Unmarshal failed for key", rKey)
+  }
+	return item
+}
