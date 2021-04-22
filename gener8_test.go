@@ -14,7 +14,6 @@ func TestParsing(t *testing.T) {
 	kws := "a,b,c"
 
 	keywords, err := parseKws(kws)
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -50,7 +49,6 @@ func TestParsing(t *testing.T) {
 
 func TestGenerate(t *testing.T) {
 	pwd, err := os.Getwd()
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -82,7 +80,6 @@ $kw4
 	g.generate()
 
 	inData, err := ioutil.ReadFile(testFileOutput)
-
 	if err != nil {
 		t.Errorf("can't read output file: %s. Reason: %+v", testFileOutput, err)
 	}
@@ -104,7 +101,6 @@ $kw4
 
 func TestGenerateNotEnoughInputParams(t *testing.T) {
 	pwd, err := os.Getwd()
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -131,7 +127,6 @@ $kw4
 	g.generate()
 
 	inData, err := ioutil.ReadFile(testFileOutput)
-
 	if err != nil {
 		t.Errorf("can't read output file: %s. Reason: %+v", testFileOutput, err)
 	}
@@ -151,7 +146,6 @@ $kw4
 
 func TestGenerateWayTooManyInputParams(t *testing.T) {
 	pwd, err := os.Getwd()
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -178,7 +172,6 @@ $kw4
 	g.generate()
 
 	inData, err := ioutil.ReadFile(testFileOutput)
-
 	if err != nil {
 		t.Errorf("can't read output file: %s. Reason: %+v", testFileOutput, err)
 	}

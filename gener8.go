@@ -106,7 +106,6 @@ func (g *gener8) generate() {
 
 func parseKws(kws string) ([]string, error) {
 	keywords, err := csv.NewReader(strings.NewReader(kws)).Read()
-
 	if err != nil {
 		return nil, err
 	}
